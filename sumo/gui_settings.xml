@@ -2,26 +2,28 @@
 <viewsettings>
 
     <scheme name="jaam_ctrl">
-        <background backgroundColor="#0A0F1E" showGrid="0"/>
+        <background backgroundColor="#001a00" showGrid="0"/>
 
         <edges laneEdgeMode="0" laneShowBorders="1" showLinkDecals="1"
                widthExaggeration="2.0">
-            <colorScheme name="uniform">
-                <entry color="40,50,80"/>
+            <colorScheme name="by usage">
+                <entry color="150,150,150"/>
             </colorScheme>
         </edges>
 
         <vehicles vehicleMode="0" vehicleQuality="2"
-                  vehicleExaggeration="5.0" minVehicleSize="2.0"
+                  vehicleExaggeration="12.0" minVehicleSize="3.5"
                   showBlinker="1">
             <colorScheme name="given/assigned vehicle color">
-                <entry color="0,200,255"/>
+                <entry color="247,244,60"/>
+                <entry color="255,143,150"/>
+                <entry color="180,254,178"/>
             </colorScheme>
         </vehicles>
 
         <junctions junctionMode="0" drawShape="1">
             <colorScheme name="uniform">
-                <entry color="20,30,60"/>
+                <entry color="10,10,10"/>
             </colorScheme>
         </junctions>
 
@@ -29,7 +31,7 @@
     </scheme>
 
     <viewport x="500" y="0" zoom="200"/>
-    <delay value="50"/>
+    <delay value="20"/>
     <breakpoints/>
 
 </viewsettings>

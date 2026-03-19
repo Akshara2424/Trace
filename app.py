@@ -31,7 +31,7 @@ import streamlit as st
 # PAGE CONFIG
 # ══════════════════════════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="Jaam",
+    page_title="JaamCTRL",
     layout="wide",
     page_icon="🚦",
     initial_sidebar_state="expanded",
@@ -153,13 +153,6 @@ st.markdown(f"""
     position: relative;
     z-index: 2;
 }}
-
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {{
-    background-color: {BG_CARD};
-    border-right: 1px solid {BD_DARK};
-}}
-[data-testid="stSidebar"] * {{ color: {WHITE}; font-family: 'Bitcount Ink', system-ui; font-weight: 300; }}
 
 /* ── Headers — yellow primary ── */
 h1, h2, h3, h4, h5, h6,
@@ -589,7 +582,7 @@ def line_chart(df: pd.DataFrame, colours: list[str] | None = None,
                         legend=alt.Legend(orient="bottom", direction="horizontal")),
         tooltip=[x_col, "Series", "Value"],
     ).properties(height=height)
-    st.altair_chart(_styled(chart), use_container_width=True)
+    st.altair_chart(_styled(chart), width='stretch')
 
 
 def bar_chart(df: pd.DataFrame, colours: list[str] | None = None,
@@ -609,7 +602,7 @@ def bar_chart(df: pd.DataFrame, colours: list[str] | None = None,
         xOffset="Series:N",
         tooltip=[cat_col, "Series", "Value"],
     ).properties(height=height)
-    st.altair_chart(_styled(chart), use_container_width=True)
+    st.altair_chart(_styled(chart), width='stretch')
 
 
 def area_chart(df: pd.DataFrame, colours: list[str] | None = None,
@@ -630,7 +623,7 @@ def area_chart(df: pd.DataFrame, colours: list[str] | None = None,
         _styled((base.mark_area(opacity=opacity, interpolate="monotone") +
                  base.mark_line(strokeWidth=2.5, interpolate="monotone")
                 ).properties(height=height)),
-        use_container_width=True,
+        width='stretch',
     )
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -695,7 +688,7 @@ for k, v in {
         st.session_state[k] = v
 
 model_exists = os.path.exists(MODEL_PATH + ".zip")
-logo_path    = os.path.join(ROOT, "assets", "logo.png")
+logo_path    = os.path.join(ROOT, "assets", "logo.jpeg")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # UTILITY HELPERS
@@ -747,40 +740,6 @@ def _run_sim(mode: str, prog_slot) -> "SimResult":
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# SIDEBAR
-# ══════════════════════════════════════════════════════════════════════════════
-with st.sidebar:
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=100)
-    st.markdown("## Jaam Ctrl")
-    st.markdown(_badge("CP Delhi · Janpath Corridor", "green"), unsafe_allow_html=True)
-
-    st.markdown("### Simulation Settings")
-    st.session_state.traffic_scale = st.slider(
-        "Traffic Volume", 0.5, 2.0, 1.0, 0.1,
-        help="Multiplier on all vehicle flows",
-    )
-    st.session_state.accident_step = st.slider(
-        "Inject Accident (s)", -1, 1700, -1, 50,
-        help="-1 = no accident injected",
-    )
-    st.session_state.sim_seed = st.number_input("Seed", value=42, step=1)
-
-    st.markdown("### RL Model")
-    if model_exists or st.session_state.training_done:
-        st.markdown(_badge("Model Ready", "green"), unsafe_allow_html=True)
-        log = load_training_log() if RL_OK else {}
-        if log:
-            st.caption(
-                f"Episodes: {log.get('total_episodes','?')}  "
-                f"Best reward: {log.get('best_reward',0):.3f}"
-            )
-    else:
-        st.markdown(_badge("No Model – Train First", "yellow"), unsafe_allow_html=True)
-
-    with st.expander("Junctions"):
-        for jid, name in JUNCTION_NAMES.items():
-            st.markdown(f"**{jid}** — {name}")
 
 
 # ── Logo ──────────────────────────────────────────────────────────────────
@@ -797,29 +756,123 @@ logo_html = (
 
 # ── Header HTML ────────────────────────────────────────────────────────────
 
-col1, col2 = st.columns([0.3, 0.7])
-with col1:
-    st.image("assets/logo.jpeg", width=500)
-st.markdown(
-    "<p style='color:#FFFFFF;margin-top:0px; margin-left:45px;font-size:1.3em;'>"
-    "AI Adaptive Traffic Signal Optimizer </p>",
-    unsafe_allow_html=True,
-)
+st.image("assets/header.png", width='stretch')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════════
-tab_dash, tab_sig, tab_heat, tab_rl, tab_wi = st.tabs([
-    "Dashboard", "Signal View", "Heatmap", "RL Training", "Controls"
+tab_about, tab_dash, tab_sig, tab_heat, tab_rl, tab_ctrl = st.tabs([
+    "About Us", "Dashboard", "Signal View", "Heatmap", "RL Training", "Controls"
 ])
 
+
+# ════════════════════════════════════════════════════════════════════════════
+# TAB 0  ABOUT US
+# ════════════════════════════════════════════════════════════════════════════
+with tab_about:
+    
+    # ── First Division: Content + Video ──────────────────────────────────────
+    st.markdown("### About This Project")
+    col_content, col_video = st.columns([1, 1])
+    
+    with col_content:
+        st.markdown("""
+**JaamCTRL** is an AI-powered traffic signal optimization system designed to reduce congestion, delays, and environmental impact in urban corridors.
+
+#### What We Do
+- **Fixed-Time Control**: Traditional pre-programmed signals (baseline)
+- **Adaptive Control**: Queue-aware optimization with green-wave coordination
+- **RL Agent (PPO)**: Deep reinforcement learning for intelligent signal coordination across all 3 junctions
+
+#### Key Performance Improvements
+- **~31% delay reduction** (Adaptive vs Fixed)
+- **~53% delay reduction** (RL Agent vs Fixed)
+- Better flow balance and throughput
+- Reduced tail emissions
+        """)
+    
+    with col_video:
+        video_path = "assets/simulation.mp4"
+        if os.path.exists(os.path.join(ROOT, video_path)):
+            with open(os.path.join(ROOT, video_path), "rb") as f:
+                st.video(f)
+        else:
+            st.info("📹 Simulation video not found")
+    
+    
+    # ── Second Division: Description + Poster ───────────────────────────────
+    st.markdown("### How It Works")
+    st.markdown("""
+JaamCTRL uses three distinct approaches to traffic signal control, comparing and optimizing their performance in real-time urban scenarios. Our reinforcement learning agent learns optimal policies to minimize average vehicle delay across coordinated intersections.
+
+**System Architecture:**
+- Real-time traffic simulation via SUMO (Simulation of Urban Mobility)
+- GPS-based congestion heatmaps and vehicle tracking
+- PPO (Proximal Policy Optimization) agent for adaptive control
+- Comparative analysis framework for benchmarking
+    """)
+    
+    # Poster placeholder
+    poster_path = os.path.join(ROOT, "assets", "poster.png")
+    if os.path.exists(poster_path):
+        st.image(poster_path, width="stretch")
+    else:
+        st.info("Project poster not found at assets/poster.png")
+    
+    
+    # ── Getting Started ────────────────────────────────────────────────────
+    st.markdown("### Getting Started")
+    st.markdown("""
+1. Go to the **Dashboard** tab
+2. Click **DIY Settings** to adjust traffic parameters
+3. Click **Run Fixed**, **Run Adaptive**, or **Run RL Agent** buttons
+4. View results in metrics and charts
+5. Explore detailed analysis in other tabs
+    """)
+    
+
+    
+    # ── Tabs Overview ──────────────────────────────────────────────────────
+    st.markdown("### Tabs Overview")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("**Dashboard**\nRun simulations & view results")
+        st.markdown("**Signal View**\nPhase timings & coordination")
+        st.markdown("**Heatmap**\nCongestion visualization")
+    with c2:
+        st.markdown("**RL Training**\nTrain the AI agent")
+        st.markdown("**Controls**\nFull settings & scenarios")
+        st.markdown("**About Us**\nProject information")
+    
 
 # ════════════════════════════════════════════════════════════════════════════
 # TAB 1  DASHBOARD
 # ════════════════════════════════════════════════════════════════════════════
 with tab_dash:
     st.markdown("<div style='margin-top:12px'></div>", unsafe_allow_html=True)
+    
+    # Settings section
+    with st.expander("DIY Settings", expanded=False):
+        st.markdown("**Traffic Volume** (simulations only)")
+        st.session_state.traffic_scale = st.slider(
+            "Multiplier", 0.5, 2.0, st.session_state.traffic_scale, 0.1,
+            help="Adjust vehicle densities",
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**Inject Accident**")
+            st.session_state.accident_step = st.slider(
+                "Time (s)", -1, 1700, st.session_state.accident_step, 50,
+                help="-1 = disabled",
+            )
+        with col2:
+            st.markdown("**Random Seed**")
+            st.session_state.sim_seed = st.number_input("Seed", value=int(st.session_state.sim_seed), step=1, key="seed_dashboard")
+        
+        st.info("📌 See **DIY** tab for detailed settings and model info.")
+    
     st.markdown("### Run Simulations")
     rc1, rc2, rc3 = st.columns(3)
 
@@ -827,7 +880,7 @@ with tab_dash:
         st.markdown(_badge("Baseline", "red"), unsafe_allow_html=True)
         st.markdown("**Fixed-Time**")
         st.caption("35s/30s fixed cycle, no coordination")
-        if st.button("Run Fixed", use_container_width=True):
+        if st.button("Run Fixed", width='stretch'):
             with st.spinner("Running..."):
                 p = st.empty()
                 st.session_state.fixed_result = _run_sim("fixed", p)
@@ -837,7 +890,7 @@ with tab_dash:
         st.markdown(_badge("Rule-Based AI", "yellow"), unsafe_allow_html=True)
         st.markdown("**Adaptive Control**")
         st.caption("Queue-aware + green-wave across J0→J1→J2")
-        if st.button("Run Adaptive", use_container_width=True):
+        if st.button("Run Adaptive", width='stretch'):
             with st.spinner("Running..."):
                 p = st.empty()
                 st.session_state.adaptive_result = _run_sim("adaptive", p)
@@ -848,7 +901,7 @@ with tab_dash:
         st.markdown("**RL Agent**")
         st.caption("PPO jointly controls all 3 signals (18-dim obs)")
         rl_off = not (model_exists or st.session_state.training_done)
-        if st.button("Run RL Agent", use_container_width=True, disabled=rl_off):
+        if st.button("Run RL Agent", width='stretch', disabled=rl_off):
             with st.spinner("Running..."):
                 if st.session_state.ppo_model is None and RL_OK:
                     st.session_state.ppo_model = load_ppo_model()
@@ -1086,7 +1139,7 @@ with tab_sig:
         if sv_res.signal_events:
             with st.expander("Phase Switch Log (first 50 events)"):
                 st.dataframe(pd.DataFrame(sv_res.signal_events[:50]),
-                             use_container_width=True, hide_index=True)
+                             width='stretch', hide_index=True)
     else:
         st.info(f"Run **{sv_mode}** on the Dashboard tab to see signal data.")
 
@@ -1157,7 +1210,7 @@ with tab_heat:
                                 "J1 Density": d.get("J1",0.0),
                                 "J2 Density": d.get("J2",0.0),
                                 "Flow Balance": fb})
-            st.dataframe(pd.DataFrame(rows_d), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(rows_d), width='stretch', hide_index=True)
         else:
             st.info("Run at least one simulation to see the combined heatmap.")
     else:
@@ -1232,7 +1285,7 @@ Action (3-bit binary → Discrete 8)
             ts = st.select_slider("Timesteps", [1000, 2000, 3000, 5000], 3000)
             lr = st.select_slider("Learning Rate", [1e-4, 3e-4, 1e-3], 3e-4,
                                   format_func=lambda x: f"{x:.0e}")
-            if st.button("Train PPO Agent", use_container_width=True, type="primary"):
+            if st.button("Train PPO Agent", width='stretch', type="primary"):
                 pbar = st.progress(0, text="Initialising...")
                 def _cb(s, t): pbar.progress(min(s/t,1.0), text=f"Training {s}/{t}")
                 try:
@@ -1280,7 +1333,37 @@ R = + 1.0 × tanh( (delay_before - delay_after) / delay_before )  # delay reduct
 # ════════════════════════════════════════════════════════════════════════════
 # TAB 5  WHAT-IF
 # ════════════════════════════════════════════════════════════════════════════
-with tab_wi:
+with tab_ctrl:
+    st.markdown("### Controls & Scenarios")
+    
+    st.markdown("#### Simulation Parameters")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.session_state.traffic_scale = st.slider(
+            "Traffic Volume", 0.5, 2.0, st.session_state.traffic_scale, 0.1,
+            help="Multiplier on all vehicle flows",
+        )
+    with c2:
+        st.session_state.accident_step = st.slider(
+            "Inject Accident (s)", -1, 1700, st.session_state.accident_step, 50,
+            help="-1 = no accident injected",
+        )
+    with c3:
+        st.session_state.sim_seed = st.number_input("Seed", value=int(st.session_state.sim_seed), step=1, key="seed_controls")
+
+    st.markdown("#### RL Model Status")
+    if model_exists or st.session_state.training_done:
+        st.markdown(_badge("Model Ready", "green"), unsafe_allow_html=True)
+        log = load_training_log() if RL_OK else {}
+        if log:
+            st.caption(
+                f"Episodes: {log.get('total_episodes','?')} | "
+                f"Best reward: {log.get('best_reward',0):.3f}"
+            )
+    else:
+        st.markdown(_badge("No Model – Train First", "yellow"), unsafe_allow_html=True)
+
+    st.markdown("---")
     st.markdown("### What-If Scenario Explorer")
     rng = np.random.default_rng(7)
 
@@ -1327,7 +1410,7 @@ with tab_wi:
         "Delay Reduction": ["—", "~31%", "~53%"],
         "Flow Balance":    [0.45, 0.28, 0.14],
         "Coordination":    ["None", "Green-wave + queue", "Joint 18-dim PPO"],
-    }), use_container_width=True, hide_index=True)
+    }), width='stretch', hide_index=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1339,6 +1422,6 @@ st.markdown(
     f"font-family:'Bitcount Ink',system-ui;font-weight:400;letter-spacing:.06em'>"
     f"<span style='color:{YELLOW}'>JaamCTRL</span> &bull; "
     f"Build with KodeMaster.ai Hackathon 2026 &bull; "
-    f"<span style='color:{MINT}'>Team : BRAT</span></p>",
+    f"<span style='color:{PINK}'>Team : BRAT</span></p>",
     unsafe_allow_html=True,
 )
