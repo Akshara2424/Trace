@@ -2,10 +2,10 @@
 <viewsettings>
 
     <scheme name="jaam_ctrl">
-        <background backgroundColor="#001a00" showGrid="0"/>
+        <background backgroundColor="#000000" showGrid="0"/>
 
         <edges laneEdgeMode="0" laneShowBorders="1" showLinkDecals="1"
-               widthExaggeration="2.0">
+               widthExaggeration="2.0" showLaneDirection="1" laneArrowMode="1">
             <colorScheme name="by usage">
                 <entry color="150,150,150"/>
             </colorScheme>

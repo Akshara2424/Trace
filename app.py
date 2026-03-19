@@ -284,9 +284,9 @@ p, span, div, label {{ color: {WHITE}; font-family: 'Bitcount Ink', system-ui; f
     border-color: {YELLOW}40;
 }}
 [data-testid="stTabs"] [aria-selected="true"] {{
-    background-color: {YELLOW}12 !important;
-    color: {YELLOW} !important;
-    border-color: {YELLOW}50 !important;
+    background-color: {YELLOW} !important;
+    color: #000000 !important;
+    border-color: {YELLOW} !important;
     border-bottom: 2px solid {YELLOW} !important;
 }}
 [data-testid="stTabs"] [data-baseweb="tab-panel"] {{
@@ -785,51 +785,83 @@ with tab_about:
 - **Adaptive Control**: Queue-aware optimization with green-wave coordination
 - **RL Agent (PPO)**: Deep reinforcement learning for intelligent signal coordination across all 3 junctions
 
-#### Key Performance Improvements
-- **~31% delay reduction** (Adaptive vs Fixed)
-- **~53% delay reduction** (RL Agent vs Fixed)
-- Better flow balance and throughput
-- Reduced tail emissions
         """)
     
     with col_video:
-        video_path = "assets/simulation.mp4"
-        if os.path.exists(os.path.join(ROOT, video_path)):
-            with open(os.path.join(ROOT, video_path), "rb") as f:
-                st.video(f)
+        video_path = "assets/simulation1.mp4"
+        full_video_path = os.path.join(ROOT, video_path)
+        if os.path.exists(full_video_path):
+            video_b64 = base64.b64encode(open(full_video_path, "rb").read()).decode()
+            st.markdown(
+                f'<video width="100%" autoplay loop muted playsinline style="border:none;border-radius:8px;display:block;background:#000">'
+                f'<source src="data:video/mp4;base64,{video_b64}" type="video/mp4">'
+                f'Your browser does not support the video tag.'
+                f'</video>',
+                unsafe_allow_html=True
+            )
         else:
             st.info("📹 Simulation video not found")
     
     
-    # ── Second Division: Description + Poster ───────────────────────────────
-    st.markdown("### How It Works")
-    st.markdown("""
-JaamCTRL uses three distinct approaches to traffic signal control, comparing and optimizing their performance in real-time urban scenarios. Our reinforcement learning agent learns optimal policies to minimize average vehicle delay across coordinated intersections.
-
-**System Architecture:**
-- Real-time traffic simulation via SUMO (Simulation of Urban Mobility)
-- GPS-based congestion heatmaps and vehicle tracking
-- PPO (Proximal Policy Optimization) agent for adaptive control
-- Comparative analysis framework for benchmarking
-    """)
+    # ── Second Division ───────────────────────────────
+    st.markdown(f"""
+    <div style="
+        border: 2px solid {PINK};
+        border-radius: 12px;
+        padding: 24px;
+        margin: 20px 0;
+    ">
+        <h4 style="color: {PINK}; margin-top: 0; font-family: 'Bitcount Ink', system-ui;">Key Performance Improvements</h4>
+        <ul style="color: {WHITE}; font-family: 'Bitcount Ink', system-ui; line-height: 1.8;">
+            <li><strong>~31% delay reduction</strong> (Adaptive vs Fixed)</li>
+            <li><strong>~53% delay reduction</strong> (RL Agent vs Fixed)</li>
+            <li>Better flow balance and throughput</li>
+            <li>Reduced tail emissions</li>
+        </ul>
+        
+        <h3 style="color: {YELLOW}; font-family: 'Bitcount Ink', system-ui; margin-top: 20px;">How It Works</h3>
+        <p style="color: {WHITE}; font-family: 'Bitcount Ink', system-ui; line-height: 1.8;">
+            JaamCTRL uses three distinct approaches to traffic signal control, comparing and optimizing their performance in real-time urban scenarios. Our reinforcement learning agent learns optimal policies to minimize average vehicle delay across coordinated intersections.
+        </p>
+        
+        <h4 style="color: {MINT}; font-family: 'Bitcount Ink', system-ui;">System Architecture:</h4>
+        <ul style="color: {WHITE}; font-family: 'Bitcount Ink', system-ui; line-height: 1.8;">
+            <li>Real-time traffic simulation via SUMO (Simulation of Urban Mobility)</li>
+            <li>GPS-based congestion heatmaps and vehicle tracking</li>
+            <li>PPO (Proximal Policy Optimization) agent for adaptive control</li>
+            <li>Comparative analysis framework for benchmarking</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
     
+    #--------------------Third Division: Poster----------------------
     # Poster placeholder
     poster_path = os.path.join(ROOT, "assets", "poster.png")
     if os.path.exists(poster_path):
-        st.image(poster_path, width="stretch")
+        st.image(poster_path, width=600)
     else:
         st.info("Project poster not found at assets/poster.png")
     
     
     # ── Getting Started ────────────────────────────────────────────────────
-    st.markdown("### Getting Started")
-    st.markdown("""
-1. Go to the **Dashboard** tab
-2. Click **DIY Settings** to adjust traffic parameters
-3. Click **Run Fixed**, **Run Adaptive**, or **Run RL Agent** buttons
-4. View results in metrics and charts
-5. Explore detailed analysis in other tabs
-    """)
+    st.markdown(f"""
+    <div style="
+        background-color: {YELLOW};
+        border-radius: 12px;
+        padding: 24px;
+        margin: 16px 0;
+    ">
+        <h3 style="color: #1a1a1a; margin-top: 0; font-family: 'Bitcount Ink', system-ui;">Getting Started</h3>
+        <ol style="color: #1a1a1a; font-family: 'Bitcount Ink', system-ui; line-height: 1.8;">
+            <li>Go to the <a href="#dashboard" style="color: #1a1a1a; font-weight: bold;"><strong>Dashboard</strong></a> tab</li>
+            <li>Click <strong>DIY Settings</strong> to adjust traffic parameters</li>
+            <li>Click <strong>Run Fixed</strong>, <strong>Run Adaptive</strong>, or <strong>Run RL Agent</strong> buttons</li>
+            <li>View results in metrics and charts</li>
+            <li>Explore detailed analysis in other tabs</li>
+        </ol>
+    </div>
+    """, unsafe_allow_html=True)
+
     
 
     
@@ -837,13 +869,13 @@ JaamCTRL uses three distinct approaches to traffic signal control, comparing and
     st.markdown("### Tabs Overview")
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("**Dashboard**\nRun simulations & view results")
-        st.markdown("**Signal View**\nPhase timings & coordination")
-        st.markdown("**Heatmap**\nCongestion visualization")
+        st.markdown("[**Dashboard**](#dashboard) — Run simulations & view results")
+        st.markdown("[**Signal View**](#signal-view) — Phase timings & coordination")
+        st.markdown("[**Heatmap**](#heatmap) — Congestion visualization")
     with c2:
-        st.markdown("**RL Training**\nTrain the AI agent")
-        st.markdown("**Controls**\nFull settings & scenarios")
-        st.markdown("**About Us**\nProject information")
+        st.markdown("[**RL Training**](#rl-training) — Train the AI agent")
+        st.markdown("[**Controls**](#controls) — Full settings & scenarios")
+        st.markdown("[**About Us**](#about-us) — Project information")
     
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -871,7 +903,7 @@ with tab_dash:
             st.markdown("**Random Seed**")
             st.session_state.sim_seed = st.number_input("Seed", value=int(st.session_state.sim_seed), step=1, key="seed_dashboard")
         
-        st.info("📌 See **DIY** tab for detailed settings and model info.")
+        st.info("See **DIY** tab for detailed settings and model info.")
     
     st.markdown("### Run Simulations")
     rc1, rc2, rc3 = st.columns(3)
