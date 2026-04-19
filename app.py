@@ -31,7 +31,7 @@ def calculate_pis(temps_array, delay_minutes, spec):
     
     deduct_above = above_max * 2.0
     deduct_below = below_min * 1.5
-    deduct_delay = delay_minutes * 0.5
+    deduct_delay = max(0, (delay_minutes - 180) * 0.1)
     
     score -= deduct_above
     score -= deduct_below
