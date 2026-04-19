@@ -3,7 +3,9 @@
 > **AI Adaptive Traffic Signal Optimizer** for Indian Urban Corridors
 > + **Cold Chain Integrity Auditor** (Pharmaceutical Transit Monitoring)
 > 
-> Hack Helix 2026 – T3-P02: Cold Chain Integrity Challenge (Team: Cupcakes @ TIET)
+> Hack Helix 2026 – T3-P02: Cold Chain Integrity Challenge (Team: Cupcakes)
+>
+> **GitHub Repository:** [anchu2904/JaamCTRL](https://github.com/anchu2904/JaamCTRL)
 
 ---
 
@@ -170,7 +172,7 @@ This prioritization improves **Product Integrity Score by ~17%** for standard ro
 
 ### Streamlit Cold Chain Monitor Tab
 
-The new **❄️ Cold Chain** tab includes:
+The new **Cold Chain** tab includes:
 1. **Sidebar:** Drug profile selector
 2. **Simulation:** Generate→Reconstruct→Score workflow
 3. **Results:**
@@ -268,8 +270,8 @@ Open http://localhost:8501 in your browser.
 6. **Controls tab** → Explore traffic volume and accident scenarios
 
 #### Cold Chain Monitor (Pharmaceutical Auditing)
-1. **❄️ Cold Chain tab** → Select drug profile (COVID_Vaccine / Insulin / Blood_Plasma)
-2. **Cold Chain tab** → Click "🎬 Simulate Cold Chain Run"
+1. ** Cold Chain tab** → Select drug profile (COVID_Vaccine / Insulin / Blood_Plasma)
+2. **Cold Chain tab** → Click "Simulate Cold Chain Run"
 3. View:
    - Reconstructed temperature history (sparse + dense)
    - Product Integrity Score comparison (Standard vs JaamCTRL routing)
@@ -305,7 +307,7 @@ Open http://localhost:8501 in your browser.
 
 ## Team & Attribution
 
-**Team Cupcakes** (Thapar Institute of Engineering & Technology) — Hack Helix 2026 Submission:
+**Team Cupcakes** — Hack Helix 2026 Submission:
 - **Hack Helix 2026** (T3-P02 Cold Chain Integrity Challenge) — Pharmaceutical cold chain module with JaamCTRL integration
   - JaamCTRL: Adaptive traffic signal optimization for reduced delivery delays
   - Cold Chain Monitor: Real-time pharma integrity auditing & PIS scoring
