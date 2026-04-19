@@ -1,4 +1,499 @@
 """
+Trace - Cold Chain Batch Integrity Auditor v3.0
+Complete 4-tab workflow: Journey Setup > Data Sources > Data Integration > Batch Processing
+GPS + Temperature Sensors + Ambient API + PIS Calculation
+"""
+import streamlit as st
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import os
+import json
+import plotly.graph_objects as go
+import plotly.express as px
+from scipy import interpolate
+import requests
+
+WHITE = "#FFFFFF"
+GREEN = "#1fc367"
+BLUE = "#9ebff5"
+YELLOW = "#f4e973"
+BLACK = "#000000"
+RED = "#FF6464"
+GREY = "#a6b2b0"
+
+st.set_page_config(page_title="Trace - Cold Chain Auditor", page_icon="", layout="wide")
+
+custom_css = f"""
+<style>
+    .stApp {{ background-color: {WHITE}; }}
+    .stButton > button {{
+        background-color: {GREEN} !important;
+        color: {WHITE} !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        padding: 10px 20px !important;
+        box-shadow: 0 2px 8px rgba(31, 195, 103, 0.2);
+    }}
+    .stButton > button:hover {{ background-color: #16a153 !important; }}
+    .stMetric {{
+        background-color: {WHITE};
+        border: 2px solid {GREEN};
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 2px 6px rgba(158, 191, 245, 0.15);
+    }}
+    .stMetric label {{ color: {GREY} !important; font-weight: 600; }}
+    .stMetric-value {{ color: {GREEN} !important; font-size: 28px !important; font-weight: bold; }}
+    .stTabs [data-baseweb="tab-list"] {{ gap: 8px; background-color: transparent; }}
+    .stTabs [data-baseweb="tab"] {{
+        padding: 12px 20px !important;
+        border-radius: 8px 8px 0 0 !important;
+        background-color: {WHITE};
+        border: 2px solid {BLUE};
+        border-bottom: none;
+        color: {GREY} !important;
+        font-weight: 600;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background-color: {GREEN} !important;
+        border: 2px solid {GREEN} !important;
+        color: {WHITE} !important;
+    }}
+    hr {{ border: none; height: 2px; background: linear-gradient(to right, {GREEN}, {BLUE}, {YELLOW}); margin: 20px 0; }}
+    .stTextInput input, .stSelectbox select {{ background-color: {WHITE} !important; color: {BLACK} !important; border: 2px solid {BLUE} !important; border-radius: 8px !important; }}
+    .stAlert.success {{ background-color: rgba(31, 195, 103, 0.1) !important; border-left: 5px solid {GREEN} !important; color: {GREEN} !important; }}
+    .stAlert.warning {{ background-color: rgba(244, 233, 115, 0.15) !important; border-left: 5px solid {YELLOW} !important; }}
+    .stAlert.error {{ background-color: rgba(255, 100, 100, 0.1) !important; border-left: 5px solid {RED} !important; }}
+    .stAlert.info {{ background-color: rgba(158, 191, 245, 0.15) !important; border-left: 5px solid {BLUE} !important; }}
+    h1 {{ color: {GREEN} !important; font-weight: 700; }}
+    h2 {{ color: {GREEN} !important; font-weight: 700; border-bottom: 3px solid {BLUE}; padding-bottom: 10px; }}
+    h3 {{ color: {BLACK} !important; font-weight: 600; }}
+    .pass-badge {{ background-color: {GREEN}; color: {WHITE}; padding: 20px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 32px; }}
+    .fail-badge {{ background-color: {RED}; color: {WHITE}; padding: 20px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 32px; }}
+</style>
+"""
+st.markdown(custom_css, unsafe_allow_html=True)
+
+header_path = os.path.join(os.path.dirname(__file__), "assets", "header.jpeg")
+if os.path.exists(header_path):
+    st.image(header_path, use_container_width=True)
+
+st.markdown(f"<h1>Trace: Cold Chain Integrity Auditor</h1>", unsafe_allow_html=True)
+st.caption("GPS Logs + Temperature Sensors + Ambient API + JaamCTRL Traffic Intelligence | Hack Helix 2026")
+
+st.divider()
+
+drug_specs = {
+    "COVID Vaccine": {"min": 2.0, "max": 8.0},
+    "Insulin": {"min": 2.0, "max": 8.0},
+    "Antibiotics": {"min": 15.0, "max": 25.0},
+    "Plasma": {"min": -20.0, "max": -5.0},
+    "Biologics": {"min": 2.0, "max": 8.0}
+}
+
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Journey Setup",
+    "Data Sources",
+    "Data Integration",
+    "Batch Processing"
+])
+
+progress_keeper = st.session_state
+
+with tab1:
+    st.markdown("## Step 1: Define Shipment Journey")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("### Batch Information")
+        batch_id = st.text_input("Batch ID", "PH-2026-0419-001")
+        drug = st.selectbox("Medication", list(drug_specs.keys()))
+    
+    with col2:
+        st.markdown("### Route Details")
+        origin = st.text_input("Origin", "Delhi Central Pharma")
+        destination = st.text_input("Destination", "Hospital Chain North")
+    
+    with col3:
+        st.markdown("### Journey Duration")
+        duration_hours = st.slider("Expected Journey (hours)", 2, 12, 4)
+        start_date = st.date_input("Journey Date", datetime.now().date())
+    
+    st.divider()
+    
+    spec = drug_specs[drug]
+    
+    st.markdown("### Temperature Specifications")
+    col_s1, col_s2, col_s3 = st.columns(3)
+    with col_s1:
+        st.metric("Min Temp", f"{spec['min']}°C")
+    with col_s2:
+        st.metric("Max Temp", f"{spec['max']}°C")
+    with col_s3:
+        st.metric("Range", f"{spec['max'] - spec['min']}°C")
+    
+    st.divider()
+    
+    st.markdown("### Route Selection")
+    route_choice = st.radio(
+        "Transport Route",
+        ["Standard Signal", "JaamCTRL-Optimized", "Both"],
+        horizontal=True
+    )
+    
+    if route_choice == "Standard Signal":
+        delay_minutes = duration_hours * 60 * 1.2
+        traffic_density = 0.70
+    elif route_choice == "JaamCTRL-Optimized":
+        delay_minutes = duration_hours * 60 * 0.67
+        traffic_density = 0.15
+    else:
+        delay_minutes = duration_hours * 60
+        traffic_density = 0.42
+    
+    col_r1, col_r2 = st.columns(2)
+    with col_r1:
+        st.success(f"Estimated Delay: {delay_minutes:.0f} minutes")
+    with col_r2:
+        st.info(f"Traffic Density: {traffic_density*100:.0f}%")
+    
+    st.session_state.journey_config = {
+        'batch_id': batch_id,
+        'drug': drug,
+        'origin': origin,
+        'destination': destination,
+        'duration_hours': duration_hours,
+        'start_date': start_date,
+        'route_choice': route_choice,
+        'delay_minutes': delay_minutes,
+        'traffic_density': traffic_density,
+        'spec': spec
+    }
+
+with tab2:
+    st.markdown("## Step 2: Data Sources")
+    
+    if 'journey_config' not in st.session_state:
+        st.warning("Please complete Tab 1: Journey Setup first")
+    else:
+        config = st.session_state.journey_config
+        journey_minutes = int(config['duration_hours'] * 60)
+        spec = config['spec']
+        
+        with st.expander("GPS Coordinates (Sparse)", expanded=True):
+            st.markdown("""
+            Vehicle GPS tracker records position every 15-30 minutes (sparse data).
+            Interpolated to 1-minute granularity using cubic spline.
+            """)
+            
+            sparse_gps_times = np.linspace(0, journey_minutes, 7)
+            sparse_lats = 28.6 + np.sin(sparse_gps_times / 40) * 0.05 + np.random.normal(0, 0.01, len(sparse_gps_times))
+            sparse_lons = 77.2 + np.cos(sparse_gps_times / 40) * 0.05 + np.random.normal(0, 0.01, len(sparse_gps_times))
+            
+            gps_df = pd.DataFrame({
+                'Time (min)': sparse_gps_times.astype(int),
+                'Latitude': sparse_lats.round(4),
+                'Longitude': sparse_lons.round(4)
+            })
+            
+            st.markdown("#### Sparse GPS Readings")
+            st.dataframe(gps_df, use_container_width=True, hide_index=True)
+            st.caption(f"Total readings: {len(gps_df)} | Journey: {journey_minutes} min | Intervals: ~{int(journey_minutes/len(gps_df))} min")
+            
+            f_lat = interpolate.CubicSpline(sparse_gps_times, sparse_lats)
+            f_lon = interpolate.CubicSpline(sparse_gps_times, sparse_lons)
+            dense_gps_times = np.arange(0, journey_minutes + 1)
+            dense_lats = f_lat(dense_gps_times)
+            dense_lons = f_lon(dense_gps_times)
+            
+            st.success(f"Cubic Spline Interpolation: {len(gps_df)} points -> {len(dense_gps_times)} points")
+            
+            fig_gps = go.Figure()
+            fig_gps.add_trace(go.Scatter(x=sparse_lons, y=sparse_lats, mode='markers',
+                name='Sparse GPS', marker=dict(size=10, color=RED, symbol='diamond')))
+            fig_gps.add_trace(go.Scatter(x=dense_lons, y=dense_lats, mode='lines',
+                name='Interpolated Route', line=dict(color=BLUE, width=2)))
+            fig_gps.update_layout(title='Route Reconstruction from Sparse GPS',
+                xaxis_title='Longitude', yaxis_title='Latitude', height=400,
+                plot_bgcolor=WHITE, paper_bgcolor=WHITE, hovermode='closest')
+            st.plotly_chart(fig_gps, use_container_width=True)
+            
+            st.session_state.gps_data = {
+                'sparse_times': sparse_gps_times,
+                'dense_times': dense_gps_times,
+                'dense_lats': dense_lats,
+                'dense_lons': dense_lons
+            }
+        
+        with st.expander("Temperature Sensors (Sparse)", expanded=True):
+            st.markdown("""
+            Temperature data loggers record readings every 30-45 minutes (sparse).
+            Reconstructed to full journey profile using linear interpolation.
+            """)
+            
+            sparse_temp_times = np.array([0, 30, 60, 90, 120, 180, journey_minutes])[:7]
+            sparse_temps = spec['min'] + np.random.normal(0, 0.3, len(sparse_temp_times))
+            
+            temp_df = pd.DataFrame({
+                'Time (min)': sparse_temp_times.astype(int),
+                'Temperature (°C)': sparse_temps.round(2)
+            })
+            
+            st.markdown("#### Sparse Temperature Readings")
+            st.dataframe(temp_df, use_container_width=True, hide_index=True)
+            st.caption(f"Total readings: {len(temp_df)} | Coverage: {journey_minutes} min")
+            
+            f_temp = interpolate.interp1d(sparse_temp_times, sparse_temps, kind='linear', fill_value='extrapolate')
+            dense_temp_times = np.arange(0, journey_minutes + 1)
+            dense_temps = f_temp(dense_temp_times)
+            dense_temps = np.clip(dense_temps, spec['min'] - 5, spec['max'] + 5)
+            
+            st.success(f"Linear Interpolation: {len(temp_df)} points -> {len(dense_temp_times)} points")
+            
+            fig_temp = go.Figure()
+            fig_temp.add_hline(y=spec['max'], line_dash="dash", line_color=RED, annotation_text=f"Spec Max ({spec['max']}°C)")
+            fig_temp.add_hline(y=spec['min'], line_dash="dash", line_color=RED, annotation_text=f"Spec Min ({spec['min']}°C)")
+            fig_temp.add_hrect(y0=spec['min'], y1=spec['max'], fillcolor=GREEN, opacity=0.1, layer="below")
+            fig_temp.add_trace(go.Scatter(x=sparse_temp_times, y=sparse_temps, mode='markers',
+                name='Sensor Readings', marker=dict(size=10, color=YELLOW, symbol='circle')))
+            fig_temp.add_trace(go.Scatter(x=dense_temp_times, y=dense_temps, mode='lines',
+                name='Reconstructed', line=dict(color=BLUE, width=2)))
+            fig_temp.update_layout(title=f'Temperature Profile - {config["drug"]}',
+                xaxis_title='Journey Time (minutes)', yaxis_title='Temperature (°C)',
+                height=400, plot_bgcolor=WHITE, paper_bgcolor=WHITE, hovermode='x unified')
+            st.plotly_chart(fig_temp, use_container_width=True)
+            
+            st.session_state.temp_data = {
+                'sparse_times': sparse_temp_times,
+                'sparse_temps': sparse_temps,
+                'dense_times': dense_temp_times,
+                'dense_temps': dense_temps
+            }
+        
+        with st.expander("Ambient Weather (OpenMeteo API)", expanded=True):
+            st.markdown("""
+            Real-time weather data from OpenMeteo API (free, no authentication).
+            Fetches ambient temperature for Delhi (28.63°N, 77.22°E).
+            """)
+            
+            try:
+                lat, lon = 28.6315, 77.2167
+                start_str = config['start_date'].isoformat()
+                end_str = (config['start_date'] + timedelta(days=1)).isoformat()
+                
+                url = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lon}&start_date={start_str}&end_date={end_str}&hourly=temperature_2m"
+                
+                with st.spinner("Fetching ambient weather..."):
+                    response = requests.get(url, timeout=5)
+                    weather_data = response.json()
+                
+                if 'hourly' in weather_data:
+                    ambient_temps = weather_data['hourly']['temperature_2m']
+                    ambient_times = np.linspace(0, journey_minutes, len(ambient_temps))
+                    
+                    st.success(f"API Connected | Records: {len(ambient_temps)} | Location: Delhi (28.63N, 77.22E)")
+                    
+                    col_amb1, col_amb2, col_amb3 = st.columns(3)
+                    with col_amb1:
+                        st.metric("Min Ambient", f"{min(ambient_temps):.1f}°C")
+                    with col_amb2:
+                        st.metric("Max Ambient", f"{max(ambient_temps):.1f}°C")
+                    with col_amb3:
+                        st.metric("Mean Ambient", f"{np.mean(ambient_temps):.1f}°C")
+                    
+                    fig_amb = px.line(x=ambient_times, y=ambient_temps,
+                        title='Ambient Temperature Timeline (OpenMeteo)',
+                        labels={'x': 'Time (min)', 'y': 'Temperature (°C)'})
+                    fig_amb.update_layout(height=300, plot_bgcolor=WHITE, paper_bgcolor=WHITE)
+                    st.plotly_chart(fig_amb, use_container_width=True)
+                    
+                    st.session_state.ambient_data = {'times': ambient_times, 'temps': ambient_temps}
+                    
+            except Exception as e:
+                st.warning(f"API fetch issue: {str(e)}")
+                st.info("Using fallback ambient data (28°C)")
+                st.session_state.ambient_data = {'times': np.linspace(0, journey_minutes, 24), 'temps': np.full(24, 28.0)}
+
+with tab3:
+    st.markdown("## Step 3: Integrated Data Analysis")
+    
+    if 'journey_config' not in st.session_state or 'gps_data' not in st.session_state:
+        st.warning("Please complete Tabs 1 and 2 first")
+    else:
+        config = st.session_state.journey_config
+        gps = st.session_state.gps_data
+        temp = st.session_state.temp_data
+        spec = config['spec']
+        
+        col_map, col_temp_prof, col_metrics = st.columns([1, 1, 1])
+        
+        with col_map:
+            st.markdown("### Route Map")
+            fig_route = go.Figure()
+            fig_route.add_trace(go.Scatter(x=gps['dense_lons'], y=gps['dense_lats'], mode='lines',
+                line=dict(color=BLUE, width=3), name='Route'))
+            fig_route.add_trace(go.Scatter(x=[gps['dense_lons'][0]], y=[gps['dense_lats'][0]], mode='markers',
+                marker=dict(size=12, color=GREEN, symbol='star'), name='Start'))
+            fig_route.add_trace(go.Scatter(x=[gps['dense_lons'][-1]], y=[gps['dense_lats'][-1]], mode='markers',
+                marker=dict(size=12, color=RED, symbol='diamond'), name='End'))
+            fig_route.update_layout(title='Vehicle Route', height=350, plot_bgcolor=WHITE, paper_bgcolor=WHITE,
+                xaxis_title='Longitude', yaxis_title='Latitude')
+            st.plotly_chart(fig_route, use_container_width=True)
+        
+        with col_temp_prof:
+            st.markdown("### Temperature Profile")
+            fig_t = go.Figure()
+            fig_t.add_hrect(y0=spec['min'], y1=spec['max'], fillcolor=GREEN, opacity=0.1, layer="below")
+            fig_t.add_hline(y=spec['max'], line_dash="dash", line_color=RED)
+            fig_t.add_hline(y=spec['min'], line_dash="dash", line_color=RED)
+            fig_t.add_trace(go.Scatter(x=temp['dense_times'], y=temp['dense_temps'], mode='lines',
+                line=dict(color=BLUE, width=3), name='Temperature'))
+            fig_t.update_layout(title='Cold Chain Profile', height=350, plot_bgcolor=WHITE, paper_bgcolor=WHITE,
+                xaxis_title='Time (min)', yaxis_title='Temp (°C)')
+            st.plotly_chart(fig_t, use_container_width=True)
+        
+        with col_metrics:
+            st.markdown("### Quality Metrics")
+            
+            excursions = np.sum((temp['dense_temps'] < spec['min']) | (temp['dense_temps'] > spec['max']))
+            time_above = np.sum(temp['dense_temps'] > spec['max']) * (len(temp['dense_temps']) / len(temp['dense_times']))
+            time_below = np.sum(temp['dense_temps'] < spec['min']) * (len(temp['dense_temps']) / len(temp['dense_times']))
+            
+            pis = max(0, 100 - (excursions * 2) - (time_above * 0.15) - (time_below * 0.1) - (config['delay_minutes'] * 0.5))
+            status = "PASS" if pis >= 70 else "FAIL"
+            
+            if status == "PASS":
+                st.markdown(f"<div class='pass-badge'>PASS<br>{pis:.0f}/100</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div class='fail-badge'>FAIL<br>{pis:.0f}/100</div>", unsafe_allow_html=True)
+            
+            st.markdown(f"""
+Excursions: {int(excursions)}
+Time Above: {time_above:.0f} min
+Time Below: {time_below:.0f} min
+Delay: {config['delay_minutes']:.0f} min
+            """)
+            
+            st.session_state.pis_result = {'score': pis, 'status': status, 'excursions': excursions}
+
+with tab4:
+    st.markdown("## Step 4: Batch Processing Workflow")
+    
+    st.markdown("Process multiple batches through the complete pipeline")
+    
+    num_batches = st.slider("Number of Batches to Process", 1, 20, 5)
+    
+    st.divider()
+    
+    if st.button("Run Batch Audit", type="primary", use_container_width=True):
+        batch_results = []
+        
+        with st.spinner(f"Processing {num_batches} batches..."):
+            np.random.seed(42)
+            
+            for i in range(num_batches):
+                drug_choice = np.random.choice(list(drug_specs.keys()))
+                spec_choice = drug_specs[drug_choice]
+                journey_min = np.random.randint(180, 360)
+                
+                sparse_t = np.linspace(0, journey_min, np.random.randint(5, 8))
+                sparse_temp = spec_choice['min'] + np.random.normal(0, 0.5, len(sparse_t))
+                f_t = interpolate.interp1d(sparse_t, sparse_temp, kind='linear', fill_value='extrapolate')
+                dense_t = np.arange(0, journey_min)
+                dense_temp = f_t(dense_t)
+                dense_temp = np.clip(dense_temp, spec_choice['min'] - 5, spec_choice['max'] + 5)
+                
+                excursions = np.sum((dense_temp < spec_choice['min']) | (dense_temp > spec_choice['max']))
+                time_above = np.sum(dense_temp > spec_choice['max']) * (journey_min / len(dense_t))
+                time_below = np.sum(dense_temp < spec_choice['min']) * (journey_min / len(dense_t))
+                delay = np.random.randint(25, 65)
+                
+                pis = max(0, 100 - (excursions * 2) - (time_above * 0.15) - (time_below * 0.1) - (delay * 0.5))
+                status = "PASS" if pis >= 70 else "FAIL"
+                
+                batch_results.append({
+                    "Batch ID": f"PH-2026-0419-{i+1:03d}",
+                    "Drug": drug_choice,
+                    "Duration (min)": journey_min,
+                    "Excursions": int(excursions),
+                    "Time Above (min)": f"{time_above:.0f}",
+                    "Delay (min)": delay,
+                    "PIS Score": round(pis, 1),
+                    "Status": status,
+                    "Grade": 'A' if pis >= 90 else 'B' if pis >= 70 else 'C' if pis >= 50 else 'F'
+                })
+        
+        st.session_state.batch_results = batch_results
+    
+    if 'batch_results' in st.session_state:
+        results_df = pd.DataFrame(st.session_state.batch_results)
+        
+        st.success(f"Audit Complete: {len(results_df)} batches processed")
+        
+        st.markdown("### Summary Metrics")
+        
+        col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
+        with col_m1:
+            pass_count = len(results_df[results_df['Status'] == 'PASS'])
+            st.metric("Batches Passed", pass_count, f"/{len(results_df)}")
+        with col_m2:
+            st.metric("Pass Rate", f"{(pass_count/len(results_df))*100:.0f}%")
+        with col_m3:
+            avg_pis = results_df['PIS Score'].mean()
+            st.metric("Avg PIS", f"{avg_pis:.1f}/100")
+        with col_m4:
+            grade_a = len(results_df[results_df['Grade'] == 'A'])
+            st.metric("Grade A", grade_a)
+        with col_m5:
+            avg_delay = results_df['Delay (min)'].astype(int).mean()
+            st.metric("Avg Delay", f"{avg_delay:.0f} min")
+        
+        st.divider()
+        
+        st.markdown("### Results Table")
+        
+        def style_status(val):
+            if val == 'PASS':
+                return f'background-color: {GREEN}; color: {WHITE}'
+            else:
+                return f'background-color: {RED}; color: {WHITE}'
+        
+        styled_df = results_df.style.applymap(lambda x: style_status(x) if x in ['PASS', 'FAIL'] else '', subset=['Status'])
+        st.dataframe(styled_df, use_container_width=True, hide_index=True)
+        
+        st.divider()
+        
+        col_chart1, col_chart2 = st.columns(2)
+        
+        with col_chart1:
+            st.markdown("### PIS Distribution")
+            fig_dist = px.histogram(results_df, x='PIS Score', nbins=12,
+                title='PIS Score Distribution', color_discrete_sequence=[BLUE])
+            fig_dist.add_vline(x=70, line_dash="dash", line_color=GREEN,
+                annotation_text="Pass Threshold (70)")
+            fig_dist.update_layout(height=350, plot_bgcolor=WHITE, paper_bgcolor=WHITE)
+            st.plotly_chart(fig_dist, use_container_width=True)
+        
+        with col_chart2:
+            st.markdown("### Status Breakdown")
+            status_counts = results_df['Status'].value_counts()
+            fig_status = px.pie(values=status_counts.values, names=status_counts.index,
+                color=status_counts.index, color_discrete_map={'PASS': GREEN, 'FAIL': RED},
+                title='Pass/Fail Distribution')
+            fig_status.update_layout(height=350, plot_bgcolor=WHITE, paper_bgcolor=WHITE)
+            st.plotly_chart(fig_status, use_container_width=True)
+        
+        st.divider()
+        
+        st.markdown("### Export Results")
+        csv = results_df.to_csv(index=False)
+        st.download_button("Download Batch Results (CSV)", csv, "batch_audit.csv", "text/csv")
+
+st.divider()
+st.caption("Trace integrates GPS interpolation + temperature reconstruction + ambient weather + traffic optimization insights")
+"""
 Trace: Cold Chain Integrity Auditor
 Pharmaceutical Cold Chain + Traffic Intelligence | Hack Helix 2026
 """
