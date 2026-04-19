@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+  <!-- Pharmaceutical delivery truck (cold-chain) -->
+  <vType id="pharma_truck" 
+         length="12.0" 
+         maxSpeed="20.0"
+         accel="1.2"
+         decel="4.5"
+         color="255,255,255"
+         vClass="delivery"
+         guiShape="delivery">
+  </vType>
+
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
 
@@ -157,5 +169,31 @@
   <vehicle id="blocker_J2" type="blocker" route="r_N2E"
            depart="2500" departLane="0" departPos="5" departSpeed="0"
            color="255,0,128"/>
+
+
+  <!-- Pharmaceutical truck routes -->
+  <route id="pharma_route_0" edges="e1 e2 e3 e4 e5"/>
+  <route id="pharma_route_1" edges="e5 e4 e3 e2 e1"/>
+  
+  <!-- Vehicle: Pharma Truck 1 (depart 300s, corridor northbound) -->
+  <vehicle id="pharma_truck_1" 
+           type="pharma_truck" 
+           route="pharma_route_0" 
+           depart="300.0">
+  </vehicle>
+  
+  <!-- Vehicle: Pharma Truck 2 (depart 400s, corridor southbound) -->
+  <vehicle id="pharma_truck_2" 
+           type="pharma_truck" 
+           route="pharma_route_1" 
+           depart="400.0">
+  </vehicle>
+  
+  <!-- Vehicle: Pharma Truck 3 (depart 500s, corridor northbound) -->
+  <vehicle id="pharma_truck_3" 
+           type="pharma_truck" 
+           route="pharma_route_0" 
+           depart="500.0">
+  </vehicle>
 
 </routes>
