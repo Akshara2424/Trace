@@ -24,13 +24,155 @@ GREY = "#a6b2b0"
 
 st.set_page_config(page_title="Trace - Cold Chain Audit", page_icon="", layout="wide")
 
+custom_css = f"""
+<style>
+    .stApp {{
+        background-color: {WHITE};
+        color: {BLACK};
+    }}
+    
+    .stButton > button {{
+        background-color: {GREEN} !important;
+        color: {WHITE} !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        padding: 10px 20px !important;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(31, 195, 103, 0.2);
+    }}
+    
+    .stButton > button:hover {{
+        background-color: #16a153 !important;
+        box-shadow: 0 4px 12px rgba(31, 195, 103, 0.3);
+    }}
+    
+    .stMetric {{
+        background-color: {WHITE};
+        border: 2px solid {GREEN};
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 2px 6px rgba(158, 191, 245, 0.15);
+    }}
+    
+    .stMetric label {{
+        color: {GREY} !important;
+        font-weight: 600;
+    }}
+    
+    .stMetric-value {{
+        color: {GREEN} !important;
+        font-size: 28px !important;
+        font-weight: bold;
+    }}
+    
+    .stTabs [data-baseweb="tab-list"] {{
+        gap: 8px;
+        background-color: transparent;
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        padding: 12px 20px !important;
+        border-radius: 8px 8px 0 0 !important;
+        background-color: {WHITE};
+        border: 2px solid {BLUE};
+        border-bottom: none;
+        color: {GREY} !important;
+        font-weight: 600;
+    }}
+    
+    .stTabs [aria-selected="true"] {{
+        background-color: {GREEN} !important;
+        border: 2px solid {GREEN} !important;
+        color: {WHITE} !important;
+    }}
+    
+    hr {{
+        border: none;
+        height: 2px;
+        background: linear-gradient(to right, {GREEN}, {BLUE}, {YELLOW});
+        margin: 20px 0;
+    }}
+    
+    .stTextInput input, .stSelectbox select, .stNumberInput input {{
+        background-color: {WHITE} !important;
+        color: {BLACK} !important;
+        border: 2px solid {BLUE} !important;
+        border-radius: 8px !important;
+    }}
+    
+    .stCheckbox {{
+        background-color: transparent;
+    }}
+    
+    .stAlert.success {{
+        background-color: rgba(31, 195, 103, 0.1) !important;
+        border-left: 5px solid {GREEN} !important;
+        color: {GREEN} !important;
+    }}
+    
+    .stAlert.warning {{
+        background-color: rgba(244, 233, 115, 0.15) !important;
+        border-left: 5px solid {YELLOW} !important;
+        color: {BLACK} !important;
+    }}
+    
+    .stAlert.error {{
+        background-color: rgba(255, 100, 100, 0.1) !important;
+        border-left: 5px solid #FF6464 !important;
+        color: {BLACK} !important;
+    }}
+    
+    .stAlert.info {{
+        background-color: rgba(158, 191, 245, 0.15) !important;
+        border-left: 5px solid {BLUE} !important;
+        color: {BLACK} !important;
+    }}
+    
+    h1 {{
+        color: {GREEN} !important;
+        font-weight: 700;
+    }}
+    
+    h2 {{
+        color: {GREEN} !important;
+        font-weight: 700;
+        border-bottom: 3px solid {BLUE};
+        padding-bottom: 10px;
+    }}
+    
+    h3 {{
+        color: {BLACK} !important;
+        font-weight: 600;
+    }}
+    
+    p {{
+        color: {BLACK};
+    }}
+    
+    .stCaption {{
+        color: {GREY} !important;
+        font-weight: 500;
+    }}
+    
+    .stSidebar {{
+        background-color: {WHITE};
+        border-right: 2px solid {BLUE};
+    }}
+</style>
+"""
+
+st.markdown(custom_css, unsafe_allow_html=True)
+
+header_path = os.path.join(os.path.dirname(__file__), "assets", "header.jpeg")
+if os.path.exists(header_path):
+    st.image(header_path, use_container_width=True)
+
 col1, col2 = st.columns([3, 1])
 with col1:
-    st.markdown("# Trace: Cold Chain Integrity Auditor")
-    st.caption("Pharmaceutical Cold Chain + Traffic Intelligence | Hack Helix 2026")
+    st.markdown(f"<p style='color: {GREY}; font-size: 14px; font-weight: 500;'>Pharmaceutical Cold Chain Integrity Auditor | Powered by JaamCTRL Traffic Intelligence</p>", unsafe_allow_html=True)
 with col2:
-    st.markdown("")
-    st.markdown(f"<p style='text-align:right; color:{GREY}; font-size:12px;'><b>Track 3, Problem 02</b></p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='color: {GREY}; font-size: 12px; text-align: right;'>Hack Helix 2026 | Track 3, Problem 02</p>", unsafe_allow_html=True)
 
 st.divider()
 
